@@ -1,0 +1,62 @@
+import requests
+from requests.exceptions import RequestException
+
+# --- Configuration ---
+# Public API endpoint for demonstration purposes (JSONPlaceholder posts)
+API_URL = "https://jsonplaceholder.typicode.com/posts"
+# Limit the results to 5 posts for a clean output
+LIMIT_PARAM = "?_limit=5"
+FULL_URL = API_URL + LIMIT_PARAM
+
+def fetch_and_display_posts(url: str):
+    """
+    Consumes a public REST API endpoint and displays the results.
+
+    Args:
+        url: The full URL of the API endpoint to consume.
+    """
+    print(f"--- Attempting to fetch data from: {url} ---")
+
+    try:
+        # 1. Send the GET request to the API
+        response = requests.get(url)
+
+        # 2. Check for successful response status codes (2xx)
+        # The raise_for_status() method will raise an HTTPError for bad responses (4xx or 5xx)
+        response.raise_for_status()
+
+        # 3. Parse the JSON response body into a Python list/dictionary
+        data = response.json()
+
+        # 4. Display the results in a formatted way
+        if not data:
+            print("The API returned an empty list of results.")
+            return
+
+        print(f"\nSuccessfully retrieved {len(data)} posts.")
+        print("-" * 40)
+
+        for post in data:
+            # Assuming each item is a dictionary with 'id', 'title', and 'body'
+            post_id = post.get('id', 'N/A')
+            title = post.get('title', 'No Title')
+            body = post.get('body', 'No Content')
+
+            # Display truncated body for cleaner output
+            truncated_body = body[:80].replace('\n', ' ') + '...'
+
+            print(f"ID: {post_id}")
+            print(f"Title: {title.capitalize()}")
+            print(f"Body: {truncated_body}")
+            print("-" * 40)
+
+    except RequestException as e:
+        # Handle network-related errors (e.g., DNS failure, connection refusal)
+        print(f"\n[ERROR] A request error occurred: {e}")
+        print("Please check your internet connection or the API URL.")
+    except Exception as e:
+        # Handle other potential errors (e.g., JSON decoding errors)
+        print(f"\n[ERROR] An unexpected error occurred: {e}")
+
+if __name__ == "__main__":
+    fetch_and_display_posts(FULL_URL)
