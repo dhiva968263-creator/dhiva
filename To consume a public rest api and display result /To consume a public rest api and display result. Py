@@ -1,0 +1,87 @@
+import requests
+import json
+from typing import Optional, Dict, Any
+
+# Define the base URL for the JSONPlaceholder API
+BASE_URL = "https://jsonplaceholder.typicode.com"
+POST_ENDPOINT = f"{BASE_URL}/posts"
+
+def fetch_and_display_data(resource_url: str) -> Optional[Dict[str, Any]]:
+    """
+    Consumes a public REST API endpoint and displays the JSON result.
+
+    Args:
+        resource_url: The full URL of the API resource to fetch.
+
+    Returns:
+        The JSON data as a dictionary if successful, None otherwise.
+    """
+    print(f"--- Attempting to fetch data from: {resource_url} ---")
+    
+    try:
+        # 1. Make the GET request to the API
+        response = requests.get(resource_url, timeout=10) # Set a timeout for safety
+        
+        # 2. Check for a successful status code (200 is success)
+        response.raise_for_status() # Raises an HTTPError for bad responses (4xx or 5xx)
+
+        # 3. Parse the JSON response body
+        data = response.json()
+
+        # 4. Display the results in a nicely formatted way
+        print("\n✅ Successfully retrieved data:")
+        print(json.dumps(data, indent=4))
+        
+        # 5. Display some metadata
+        print(f"\nStatus Code: {response.status_code}")
+        print(f"Content Type: {response.headers.get('Content-Type')}")
+        print(f"Time Elapsed: {response.elapsed.total_seconds():.3f} seconds")
+        
+        return data
+
+    except requests.exceptions.HTTPError as err:
+        # Handle HTTP-specific errors (404 Not Found, 500 Server Error, etc.)
+        print(f"\n❌ HTTP Error occurred: {err}")
+        # Note: If an HTTPError occurs, the response object is usually still available
+        if 'response' in locals() and hasattr(response, 'status_code'):
+             print(f"Status Code: {response.status_code}")
+    except requests.exceptions.ConnectionError as err:
+        # Handle network-related errors (DNS failure, refused connection, etc.)
+        print(f"\n❌ Connection Error occurred: {err}")
+    except requests.exceptions.Timeout as err:
+        # Handle timeout errors
+        print(f"\n❌ Timeout Error occurred: {err}")
+    except requests.exceptions.RequestException as err:
+        # Handle all other general request errors
+        print(f"\n❌ An unknown error occurred: {err}")
+    except json.JSONDecodeError:
+        # Handle case where the response is not valid JSON
+        print("\n❌ Failed to decode JSON response.")
+        # Ensure 'response' is defined before trying to access its text
+        if 'response' in locals() and hasattr(response, 'text'):
+            print(f"Raw response text: {response.text[:100]}...") # Show beginning of response
+        
+    return None
+
+def main():
+    """Main function to run the API consumption examples."""
+    
+    print("Welcome to the Python REST API Consumer!")
+    
+    # --- Example 1: Fetch a single post (ID 5) ---
+    print("\n\n" + "="*50)
+    print("EXAMPLE 1: Fetching a single resource (Post ID 5)")
+    fetch_and_display_data(f"{POST_ENDPOINT}/5")
+    print("="*50)
+    
+    # --- Example 2: Fetch a list of posts (first 3) using query parameters ---
+    print("\n\n" + "="*50)
+    print("EXAMPLE 2: Fetching a list with query parameters (User ID 1, limit 3)")
+    # This URL fetches the first 3 posts (limit=3) for user ID 1 (userId=1)
+    query_url = f"{POST_ENDPOINT}?userId=1&_limit=3"
+    fetch_and_display_data(query_url)
+    print("="*50)
+
+if __name__ == "__main__":
+    # Reminder: This script requires the 'requests' library (pip install requests)
+    main()
